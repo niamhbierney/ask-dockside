@@ -65,6 +65,7 @@ footer{max-width:1220px;margin:18px auto 32px;padding:0 22px;color:#82919c;font-
  function removeTyping(){const el=$("typing");if(el)el.remove()}
  function extractAnswer(d){if(typeof d==="string")return d;return d?.reply??d?.response??d?.answer??d?.message??d?.output_text??d?.choices?.[0]?.message?.content??d?.result?.reply??d?.result?.answer??""}
  async function ask(question){if(requestInFlight)return;requestInFlight=true;addBubble(question,"user");showTyping();$("sendBtn").disabled=true;$("sendBtn").textContent="Thinking…";$("brainState").textContent="● Dockside is thinking";try{
+  await Promise.all([loadSessions(),loadWeather()]);
   const messages=[{role:"system",content:systemInstructions()+"\n\n"+liveContext()},...conversation,{role:"user",content:question}];
   const res=await fetch(CONFIG.brainUrl,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify({messages})});const raw=await res.text();if(!res.ok)throw Error("Brain returned "+res.status+": "+raw.slice(0,260));let data;try{data=JSON.parse(raw)}catch{data=raw}const answer=extractAnswer(data);if(!answer)throw Error("The brain responded, but its answer format was not recognised.");
   conversation.push({role:"user",content:question},{role:"assistant",content:String(answer)});if(conversation.length>24)conversation.splice(0,2);removeTyping();addBubble(String(answer),"bot");$("brainState").textContent="● Connected · conversation active";
